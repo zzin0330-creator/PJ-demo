@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>백락 프로젝트 — 학습관리 시스템 MVP</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F4F5F7;color:#1a1a1a;font-size:14px;}
+.app{display:flex;height:100vh;min-height:700px;}
+
+/* sidebar */
+.sidebar{width:196px;flex-shrink:0;background:#1A2A4F;display:flex;flex-direction:column;}
+.logo{padding:18px 16px 14px;border-bottom:1px solid #2a3f6f;}
+.logo-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:-0.3px;}
+.logo-sub{font-size:11px;color:#8aa0c8;margin-top:2px;}
+.nav-group{padding:14px 0 4px;}
+.nav-label{padding:0 16px 5px;font-size:10px;color:#5a7ab0;letter-spacing:0.06em;text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;color:#8aa0c8;font-size:13px;transition:all 0.12s;border-left:3px solid transparent;}
+.nav-item:hover{background:#243660;color:#c8d8f0;}
+.nav-item.active{background:#243660;color:#fff;border-left-color:#E0992E;font-weight:500;}
+.nav-item i{font-size:16px;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:#B8463A;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;}
+.sidebar-bottom{margin-top:auto;padding:12px 16px;border-top:1px solid #2a3f6f;}
+.user-row{display:flex;align-items:center;gap:8px;}
+.avatar{width:28px;height:28px;border-radius:50%;background:#2a3f6f;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#8aa0c8;flex-shrink:0;}
+.avatar-lg{width:36px;height:36px;font-size:13px;}
+.avatar-xl{width:44px;height:44px;font-size:15px;}
+.user-name{font-size:12px;font-weight:500;color:#c8d8f0;}
+.user-role{font-size:11px;color:#5a7ab0;}
+
+/* main */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.topbar{background:#fff;border-bottom:1px solid #e4e6ea;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.topbar-title{font-size:15px;font-weight:600;color:#1A2A4F;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;}
+.badge-danger{background:#FCEBEB;color:#A32D2D;}
+.badge-warning{background:#FAEEDA;color:#854F0B;}
+.badge-success{background:#EAF3DE;color:#3B6D11;}
+.badge-info{background:#EDF2F8;color:#1A2A4F;}
+.badge-navy{background:#1A2A4F;color:#fff;}
+
+/* panels */
+.panel{display:none;flex:1;overflow:auto;padding:16px 20px;flex-direction:column;gap:12px;}
+.panel.active{display:flex;}
+
+/* cards */
+.card{background:#fff;border:1px solid #e4e6ea;border-radius:10px;overflow:hidden;}
+.card-header{padding:11px 16px;border-bottom:1px solid #f0f1f3;display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:13px;font-weight:600;color:#1A2A4F;display:flex;align-items:center;gap:7px;}
+.card-body{padding:16px;}
+
+/* metrics grid */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.metric{background:#fff;border:1px solid #e4e6ea;border-radius:10px;padding:14px 16px;}
+.metric-label{font-size:11px;color:#888;margin-bottom:5px;font-weight:500;}
+.metric-value{font-size:26px;font-weight:700;line-height:1;}
+.metric-sub{font-size:11px;color:#aaa;margin-top:4px;}
+.v-danger{color:#A32D2D;} .v-warning{color:#854F0B;} .v-success{color:#3B6D11;} .v-navy{color:#1A2A4F;}
+
+/* member list */
+.tbl-wrap{overflow:auto;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:11px;color:#888;font-weight:600;padding:8px 14px;text-align:left;border-bottom:2px solid #f0f1f3;white-space:nowrap;}
+td{padding:10px 14px;border-bottom:1px solid #f8f8f8;font-size:13px;vertical-align:middle;}
+tr:hover td{background:#fafbfc;}
+tr.selected td{background:#EDF2F8;}
+tr:last-child td{border-bottom:none;}
+.signal{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.s-red{background:#E24B4A;} .s-yellow{background:#EF9F27;} .s-green{background:#639922;}
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:600;}
+.t-danger{background:#FCEBEB;color:#A32D2D;}
+.t-warning{background:#FAEEDA;color:#854F0B;}
+.t-success{background:#EAF3DE;color:#3B6D11;}
+.t-info{background:#EDF2F8;color:#1A2A4F;}
+.mini-bars{display:flex;align-items:flex-end;gap:2px;height:22px;}
+.mini-bars div{width:6px;border-radius:1px 1px 0 0;}
+
+/* detail side panel */
+.panels-split{display:grid;grid-template-columns:1fr 330px;gap:12px;flex:1;min-height:0;}
+.detail-panel{display:flex;flex-direction:column;overflow:auto;}
+.section-label{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;font-weight:600;}
+.stat-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f8f8f8;}
+.stat-row:last-child{border-bottom:none;}
+.stat-key{font-size:12px;color:#888;}
+.stat-val{font-size:13px;font-weight:600;}
+
+/* bar chart */
+.bar-chart{display:flex;gap:6px;align-items:flex-end;height:70px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar-fill{width:100%;border-radius:3px 3px 0 0;}
+.bar-pct{font-size:10px;font-weight:700;}
+.bar-lbl{font-size:9px;color:#aaa;}
+
+/* AI flag */
+.ai-flag{background:#FCEBEB;border:1px solid #F7C1C1;border-radius:8px;padding:10px 12px;display:flex;gap:9px;align-items:flex-start;}
+.ai-flag i{color:#A32D2D;font-size:17px;flex-shrink:0;margin-top:1px;}
+.ai-body{font-size:12px;color:#7a1a1a;line-height:1.55;}
+.ai-title{font-weight:700;margin-bottom:2px;color:#A32D2D;}
+.ai-ok{background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:8px 12px;display:flex;gap:8px;align-items:center;font-size:12px;color:#3B6D11;}
+
+/* feedback textarea */
+textarea{width:100%;border:1px solid #e4e6ea;border-radius:7px;padding:8px 10px;font-size:12px;font-family:inherit;resize:none;background:#fafbfc;color:#1a1a1a;outline:none;}
+textarea:focus{border-color:#1A2A4F;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;font-size:12px;font-family:inherit;border-radius:7px;cursor:pointer;font-weight:600;border:none;}
+.btn-navy{background:#1A2A4F;color:#fff;}
+.btn-navy:hover{background:#11203D;}
+.btn-outline{background:#fff;border:1px solid #e4e6ea;color:#444;}
+.btn-outline:hover{background:#f5f5f3;}
+.btn-amber{background:#E0992E;color:#fff;}
+.btn-amber:hover{background:#c8841a;}
+.sent-msg{font-size:12px;color:#3B6D11;margin-top:6px;display:none;align-items:center;gap:4px;}
+
+/* growth chart */
+.growth-wrap{position:relative;height:200px;background:#f8fafc;border-radius:8px;overflow:hidden;}
+.growth-svg{width:100%;height:100%;}
+
+/* progress bar */
+.prog-bar{height:6px;background:#e8e8e4;border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:3px;transition:width 0.4s;}
+
+/* notifications */
+.notif-item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid #f0f1f3;align-items:flex-start;}
+.notif-item:last-child{border-bottom:none;}
+.notif-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
+.notif-time{font-size:11px;color:#aaa;margin-top:2px;}
+.notif-title{font-size:13px;font-weight:600;}
+.notif-desc{font-size:12px;color:#666;margin-top:2px;line-height:1.4;}
+.notif-unread{width:7px;height:7px;border-radius:50%;background:#E0992E;flex-shrink:0;margin-top:4px;}
+
+/* schedule */
+.sched-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f8f8f8;align-items:center;}
+.sched-time{font-size:12px;font-weight:700;color:#1A2A4F;width:44px;flex-shrink:0;}
+.sched-name{font-size:13px;font-weight:500;}
+.sched-sub{font-size:11px;color:#888;}
+.sched-tags{display:flex;gap:4px;margin-left:auto;}
+
+/* empty */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;gap:8px;color:#bbb;font-size:13px;}
+.empty i{font-size:32px;}
+
+select{font-size:12px;padding:4px 8px;border:1px solid #e4e6ea;border-radius:6px;background:#fafbfc;color:#1a1a1a;font-family:inherit;cursor:pointer;}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+
+/* tab nav inside panel */
+.tab-nav{display:flex;gap:2px;background:#f0f1f3;padding:3px;border-radius:8px;margin-bottom:12px;}
+.tab-btn{flex:1;padding:6px 0;font-size:12px;font-weight:600;text-align:center;border-radius:6px;cursor:pointer;border:none;background:transparent;color:#888;transition:all 0.15s;}
+.tab-btn.active{background:#fff;color:#1A2A4F;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+
+/* AI assistant box */
+.ai-assist{background:linear-gradient(135deg,#EDF2F8 0%,#e8f4e8 100%);border:1px solid #c8d8f0;border-radius:10px;padding:14px;}
+.ai-chip{display:inline-flex;align-items:center;gap:5px;background:#1A2A4F;color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:10px;}
+.ai-chip i{font-size:12px;}
+
+/* progress stage */
+.stage-row{display:flex;align-items:center;gap:0;}
+.stage{flex:1;text-align:center;padding:8px 4px;font-size:11px;color:#aaa;position:relative;}
+.stage.done{color:#1A2A4F;font-weight:600;}
+.stage.current{color:#E0992E;font-weight:700;}
+.stage-dot{width:10px;height:10px;border-radius:50%;background:#e4e6ea;margin:0 auto 4px;position:relative;z-index:1;}
+.stage.done .stage-dot{background:#1A2A4F;}
+.stage.current .stage-dot{background:#E0992E;box-shadow:0 0 0 3px #FAEEDA;}
+.stage-line{position:absolute;top:14px;left:50%;right:-50%;height:2px;background:#e4e6ea;z-index:0;}
+.stage.done .stage-line{background:#1A2A4F;}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-title">백락 프로젝트</div>
+      <div class="logo-sub">구몬학습 학습관리 시스템</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">대시보드</div>
+      <div class="nav-item active" onclick="switchPanel('dashboard',this)">
+        <i class="ti ti-layout-dashboard"></i>학습 현황 대시보드
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">AI 학습관리</div>
+      <div class="nav-item" onclick="switchPanel('growth',this)">
+        <i class="ti ti-chart-line"></i>학습 성장 예측
+      </div>
+      <div class="nav-item" onclick="switchPanel('assistant',this)">
+        <i class="ti ti-robot"></i>AI 진도 어시스턴트
+      </div>
+      <div class="nav-item" onclick="switchPanel('churn',this)">
+        <i class="ti ti-alert-triangle"></i>퇴회 위험 관리
+        <span class="nav-badge">3</span>
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">운영</div>
+      <div class="nav-item" onclick="switchPanel('schedule',this)">
+        <i class="ti ti-calendar"></i>오늘 노순표
+      </div>
+      <div class="nav-item" onclick="switchPanel('notify',this)">
+        <i class="ti ti-bell"></i>업무 알림
+        <span class="nav-badge">5</span>
+      </div>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="user-row">
+        <div class="avatar">김지</div>
+        <div>
+          <div class="user-name">김지현 지구장</div>
+          <div class="user-role">강남 3지구</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">학습 현황 대시보드</div>
+      <div class="topbar-right">
+        <span class="badge badge-danger"><i class="ti ti-alert-triangle" style="font-size:12px"></i>퇴회 위험 3명</span>
+        <span style="font-size:12px;color:#888;">2026.06.24 · 강남 3지구</span>
+        <div class="avatar">김지</div>
+      </div>
+    </div>
+
+    <!-- ── PANEL 1: 대시보드 ── -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">담당 회원</div><div class="metric-value v-navy">42</div><div class="metric-sub">↓ 전월 2명 감소</div></div>
+        <div class="metric"><div class="metric-label">기록 입력률</div><div class="metric-value v-warning">71%</div><div class="metric-sub">목표 90% · 미입력 12명</div></div>
+        <div class="metric"><div class="metric-label">평균 정답률</div><div class="metric-value v-navy">78%</div><div class="metric-sub">전주 대비 ↑ 2%p</div></div>
+        <div class="metric"><div class="metric-label">퇴회 위험</div><div class="metric-value v-danger">3명</div><div class="metric-sub">AI 플래그 · 즉시 확인</div></div>
+      </div>
+      <div class="panels-split" style="flex:1;min-height:0;">
+        <div class="card" style="display:flex;flex-direction:column;">
+          <div class="card-header">
+            <div class="card-title"><i class="ti ti-users"></i>회원 학습 현황</div>
+            <select id="sort-sel" onchange="renderMembers()">
+              <option value="risk">위험도순</option>
+              <option value="rate">정답률순</option>
+              <option value="name">이름순</option>
+            </select>
+          </div>
+          <div style="overflow:auto;flex:1;">
+            <table>
+              <thead><tr>
+                <th style="width:22px;"></th><th>회원</th><th>정답률</th><th>제출량</th><th>4주 추세</th><th>상태</th>
+              </tr></thead>
+              <tbody id="member-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card detail-panel" id="detail-panel" style="overflow:auto;">
+          <div class="empty"><i class="ti ti-hand-click"></i>회원 선택 시 상세 표시</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PANEL 2: 학습 성장 예측 ── -->
+    <div class="panel" id="panel-growth">
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="ti ti-user-search"></i>회원 선택</div></div>
+          <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
+            <select id="growth-member" onchange="renderGrowth()" style="width:100%;padding:6px 8px;">
+              <option value="0">박서준 (초3 · 수학·국어)</option>
+              <option value="1">최유나 (초2 · 국어)</option>
+              <option value="2">정민준 (초3 · 수학)</option>
+              <option value="3">한소희 (초6 · 국어·영어)</option>
+            </select>
+            <div id="growth-profile" style="background:#f8fafc;border-radius:8px;padding:12px;"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="ti ti-chart-arrows-vertical"></i>나의 실력 비교</div></div>
+          <div class="card-body" id="growth-compare"></div>
+        </div>
+      </div>
+      <div class="card" style="flex:1;">
+        <div class="card-header">
+          <div class="card-title"><i class="ti ti-trending-up"></i>단계 도약 성장 곡선</div>
+          <span class="badge badge-info" id="growth-total-badge"></span>
+        </div>
+        <div style="padding:16px;" id="growth-chart-area"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><i class="ti ti-robot"></i>AI 분석 & 학부모 상담 멘트</div></div>
+        <div class="card-body" id="growth-ai"></div>
+      </div>
+    </div>
+
+    <!-- ── PANEL 3: AI 진도 어시스턴트 ── -->
+    <div class="panel" id="panel-assistant">
+      <div class="two-col" style="flex:1;min-height:0;">
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="card">
+            <div class="card-header"><div class="card-title"><i class="ti ti-user-search"></i>회원 선택</div></div>
+            <div style="padding:12px 16px;">
+              <select id="asst-member" onchange="renderAssistant()" style="width:100%;padding:6px 8px;">
+                <option value="0">박서준 | 초3 | 수학</option>
+                <option value="1">정민준 | 초3 | 수학</option>
+                <option value="2">한소희 | 초6 | 국어</option>
+              </select>
+            </div>
+          </div>
+          <div class="card" style="flex:1;">
+            <div class="card-header"><div class="card-title"><i class="ti ti-activity"></i>학습 역량 지수</div></div>
+            <div class="card-body" id="asst-stat"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title"><i class="ti ti-map"></i>구몬식 지도 기준 (WIG)</div></div>
+            <div class="card-body" id="asst-wig"></div>
+          </div>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;">
+          <div class="card-header"><div class="card-title"><i class="ti ti-robot"></i>AI 진도 추천</div></div>
+          <div style="flex:1;padding:14px;display:flex;flex-direction:column;gap:10px;" id="asst-recommend"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PANEL 4: 퇴회 위험 ── -->
+    <div class="panel" id="panel-churn">
+      <div class="three-col">
+        <div class="metric"><div class="metric-label">퇴회 위험 (AI 플래그)</div><div class="metric-value v-danger">3명</div><div class="metric-sub">즉시 대응 필요</div></div>
+        <div class="metric"><div class="metric-label">이번 달 퇴회</div><div class="metric-value v-warning">2명</div><div class="metric-sub">전월 대비 +1명</div></div>
+        <div class="metric"><div class="metric-label">월 퇴회율</div><div class="metric-value v-navy">4.8%</div><div class="metric-sub">목표 3% · 개선 중</div></div>
+      </div>
+      <div class="two-col" style="flex:1;">
+        <div class="card" style="display:flex;flex-direction:column;">
+          <div class="card-header"><div class="card-title"><i class="ti ti-alert-triangle" style="color:#A32D2D"></i>위험 회원 목록</div></div>
+          <div style="flex:1;overflow:auto;" id="churn-list"></div>
+        </div>
+        <div class="card" id="churn-detail" style="overflow:auto;">
+          <div class="empty"><i class="ti ti-hand-click"></i>회원 선택 시 위험 요인 표시</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PANEL 5: 노순표 ── -->
+    <div class="panel" id="panel-schedule">
+      <div class="two-col">
+        <div class="metric"><div class="metric-label">오늘 방문 예정</div><div class="metric-value v-navy">8명</div><div class="metric-sub">완료 3 · 미완료 5</div></div>
+        <div class="metric"><div class="metric-label">미입력 기록</div><div class="metric-value v-warning">3건</div><div class="metric-sub">오늘 방문 후 미기록</div></div>
+      </div>
+      <div class="two-col" style="flex:1;">
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="ti ti-calendar-time"></i>오늘 노순표</div><span style="font-size:12px;color:#888;">2026.06.24 (화)</span></div>
+          <div style="padding:8px 16px;" id="schedule-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="ti ti-bell"></i>업무 알림 미처리</div></div>
+          <div id="schedule-notif"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PANEL 6: 업무 알림 ── -->
+    <div class="panel" id="panel-notify">
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="filterNotif('all',this)">전체</button>
+        <button class="tab-btn" onclick="filterNotif('danger',this)">즉시 처리</button>
+        <button class="tab-btn" onclick="filterNotif('info',this)">정보</button>
+      </div>
+      <div class="card" id="notif-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── DATA ── */
+const members = [
+  {id:1,name:"박서준",grade:"초3",subject:"수학·국어",teacher:"이미영",rate:42,submit:3,max:10,trend:[71,65,58,42],risk:"high",
+   ai:"3주 연속 정답률 하락(71%→42%). 제출량 평균의 30% 수준. 퇴회 위험 높음.",note:"학원 추가로 집중력 저하.",feedback:"",
+   churnFactors:["3주 연속 정답률 하락","제출량 30% 수준","학원 병행 시작 (이번 달)"],
+   churnAction:"이번 주 중 학부모 전화 상담 필요. 진도 조정 및 학습 부담 완화 방안 논의."},
+  {id:2,name:"최유나",grade:"초2",subject:"국어",teacher:"박현주",rate:55,submit:5,max:10,trend:[62,59,55,55],risk:"high",
+   ai:"정답률 4주 정체. 진도 보류 중. 학부모 불만 접수 이력.",note:"진도 너무 빠르다고 컴플레인.",feedback:"",
+   churnFactors:["4주간 정답률 정체 (55%대)","학부모 컴플레인 1건","진도 보류 3주 지속"],
+   churnAction:"진도 조정 후 학부모에게 성장 곡선 데이터 보여주며 재동기 부여."},
+  {id:3,name:"김도현",grade:"초5",subject:"수학",teacher:"이미영",rate:61,submit:6,max:10,trend:[70,68,64,61],risk:"high",
+   ai:"완만한 하락세. 2주 내 기준선 이탈 예상.",note:"5학년 난이도에 어려움.",feedback:"",
+   churnFactors:["4주 연속 완만한 하락세","풀이 시간 증가 추세","부모님 다음 달 재계약 고민 중"],
+   churnAction:"이번 방문 시 핵심 단계 집중 보완. 성취 경험 만들어주는 것이 우선."},
+  {id:4,name:"이하은",grade:"초4",subject:"수학·영어",teacher:"최수진",rate:74,submit:8,max:10,trend:[71,73,74,74],risk:"ok",ai:"",note:"꾸준함.",feedback:""},
+  {id:5,name:"정민준",grade:"초3",subject:"수학",teacher:"박현주",rate:83,submit:9,max:10,trend:[79,81,82,83],risk:"good",ai:"",note:"진도 상향 검토.",feedback:""},
+  {id:6,name:"한소희",grade:"초6",subject:"국어·영어",teacher:"최수진",rate:88,submit:10,max:10,trend:[85,86,88,88],risk:"good",ai:"",note:"학부모 만족 높음.",feedback:""},
+  {id:7,name:"오준혁",grade:"초2",subject:"수학",teacher:"이미영",rate:69,submit:7,max:10,trend:[66,67,68,69],risk:"ok",ai:"",note:"안정적.",feedback:""},
+  {id:8,name:"송아름",grade:"초4",subject:"수학·국어",teacher:"박현주",rate:77,submit:8,max:10,trend:[75,76,77,77],risk:"ok",ai:"",note:"꾸준함.",feedback:""},
+];
+
+const growthData = [
+  {name:"박서준",grade:"초3",stage:"C단계",startStage:"2A",duration:"18개월",growth:"+320%",national:"상위 35%",regional:"상위 28%",global:"상위 40%",
+   curve:[20,28,35,40,44,50,58,65,72,80,88,96,104,112,120,128,135,140],
+   ai:"서준이는 꾸준한 학습으로 18개월 만에 2A→C단계로 진행 중입니다. 현재 전국 상위 35% 수준으로, 이 성장 속도를 유지하면 초4 수준의 E단계 도달이 가능합니다.",
+   counsel:"어머니, 서준이가 지난 18개월간 무려 320% 성장했습니다. 지금 속도라면 연말 E단계 진입이 충분히 가능합니다."},
+  {name:"최유나",grade:"초2",stage:"A단계",startStage:"3A",duration:"8개월",growth:"+180%",national:"상위 45%",regional:"상위 38%",global:"상위 52%",
+   curve:[10,15,22,28,32,35,38,40,42],
+   ai:"유나는 8개월간 3A→A단계로 성장 중입니다. 현재 정답률 정체는 새로운 개념 도입 구간에서 자주 나타나는 정상적인 현상입니다.",
+   counsel:"어머니, 유나가 지금 새 개념 적응 구간이라 잠시 정체처럼 보이지만, 이 구간만 지나면 다시 도약합니다."},
+  {name:"정민준",grade:"초3",stage:"D단계",startStage:"2A",duration:"22개월",growth:"+450%",national:"상위 18%",regional:"상위 12%",global:"상위 22%",
+   curve:[15,25,38,52,65,78,90,102,112,120,130,140,148,155,162,168,174,180,185,190,196,202],
+   ai:"민준이는 22개월간 뛰어난 성장을 보이고 있습니다. 전국 상위 18%로 E단계 조기 도달도 가능합니다.",
+   counsel:"어머니, 민준이가 전국 상위 18%입니다. 이 속도라면 5학년 전 F단계 진입도 목표로 삼을 수 있습니다."},
+  {name:"한소희",grade:"초6",stage:"I단계",startStage:"D",duration:"36개월",growth:"+500%",national:"상위 8%",regional:"상위 5%",global:"상위 10%",
+   curve:[40,55,70,85,98,110,122,132,142,150,158,165,172,178,184,190,196,202,208,214,219,224,228,232,236,240,244,248,252,256,260,264,268,272,276,280],
+   ai:"소희는 36개월 간 D→I단계로 500% 성장한 우수 회원입니다. 전국 상위 8%로 J리그(중학 최상위) 진입을 목표로 설정하면 좋습니다.",
+   counsel:"어머니, 소희는 전국 상위 8%입니다. J리그 선배 회원들의 진학 데이터를 보면 서울대·연세대 비율이 매우 높습니다."},
+];
+
+const asstData = [
+  {name:"박서준",grade:"초3",subject:"수학",stage:"C61",speed:18,wig:[{k:"초출 개념 숙지",v:"숙지 89% 예상",ok:true},{k:"풀이시간 단축",v:"장당 3분→2분",ok:true},{k:"숙도 체크",v:"D-2주 데이터 누락",ok:false}],
+   rec:{stage:"C81~91",reason:"C61 올림수 있는 곱셈 숙지 완료. 두자리×한자리 심화 진입 최적 시점.",basis:["최근 4주 교재 완료율 89%","풀이시간 단축 추세","C51~61 오답 15% 감소"],msg:"안녕하세요, 어머니. 서준이가 구구단 연산 연결에 잘 적응하고 있어 이번 주부터 곱셈 단계 진입을 예정하고 있습니다."}},
+  {name:"정민준",grade:"초3",subject:"수학",stage:"E81",speed:22,wig:[{k:"교재 완성도",v:"92% 달성",ok:true},{k:"개념 이해도",v:"상위 15%",ok:true},{k:"풀이 속도",v:"장당 1.8분 (목표 2분 이내)",ok:true}],
+   rec:{stage:"F11~21",reason:"E단계 전 구간 안정적 완료. 분수 기초 개념 도입 최적 시점.",basis:["E81~91 오답 8%","풀이 시간 목표치 달성","3주 연속 완료율 100%"],msg:"민준이가 E단계를 완벽하게 소화했습니다. 이번 주 F단계 분수 기초 진입을 추천드립니다."}},
+  {name:"한소희",grade:"초6",subject:"국어",stage:"H21",speed:28,wig:[{k:"독해 완성도",v:"91% 달성",ok:true},{k:"어휘 확장",v:"주 30개 신규 습득",ok:true},{k:"작문 정확도",v:"85% (목표 90%)",ok:false}],
+   rec:{stage:"H31~41",reason:"H21 독해 패턴 완성. 논술형 심화 구간 진입 준비 완료.",basis:["독해 완성도 91%","어휘 습득 속도 우수","I단계 목표 달성 예상 시점 계산 완료"],msg:"소희가 H21 구간을 훌륭하게 완수했습니다. 이번 주 H31 논술 심화 구간을 시작할 것을 권장드립니다."}},
+];
+
+const notifData = [
+  {type:"danger",icon:"ti-alert-triangle",iconBg:"#FCEBEB",iconColor:"#A32D2D",title:"자동이체 실패 — 박서준",desc:"6월 납부 미완료. 오늘 중 처리 필요.",time:"오늘 08:12",unread:true},
+  {type:"danger",icon:"ti-phone",iconBg:"#FAEEDA",iconColor:"#854F0B",title:"학부모 컴플레인 — 최유나",desc:"진도 속도 관련 문의. 회신 요청.",time:"어제 17:43",unread:true},
+  {type:"danger",icon:"ti-user-x",iconBg:"#FCEBEB",iconColor:"#A32D2D",title:"퇴회 위험 신호 — 김도현",desc:"AI가 2주 내 퇴회 가능성 감지. 확인 바람.",time:"어제 09:00",unread:true},
+  {type:"info",icon:"ti-check-circle",iconBg:"#EAF3DE",iconColor:"#3B6D11",title:"기록 입력 완료 — 이미영 교사",desc:"금주 담당 8명 기록 전원 입력 완료.",time:"오늘 10:30",unread:false},
+  {type:"info",icon:"ti-trending-up",iconBg:"#EDF2F8",iconColor:"#1A2A4F",title:"정민준 — 진도 상향 추천",desc:"AI: E단계 완료, F단계 진입 최적 시점.",time:"오늘 07:00",unread:false},
+];
+
+const scheduleData = [
+  {time:"09:00",name:"박서준",grade:"초3 · 수학",done:true,warn:true,warnMsg:"자동이체 미완료"},
+  {time:"10:00",name:"이하은",grade:"초4 · 수학·영어",done:true,warn:false},
+  {time:"10:40",name:"정민준",grade:"초3 · 수학",done:true,warn:false,good:true,goodMsg:"진도 상향 추천"},
+  {time:"13:00",name:"오준혁",grade:"초2 · 수학",done:false,warn:false},
+  {time:"14:00",name:"최유나",grade:"초2 · 국어",done:false,warn:true,warnMsg:"학부모 컴플레인 미해결"},
+  {time:"15:00",name:"한소희",grade:"초6 · 국어·영어",done:false,warn:false},
+  {time:"16:00",name:"김도현",grade:"초5 · 수학",done:false,warn:true,warnMsg:"퇴회 위험 회원"},
+  {time:"17:00",name:"송아름",grade:"초4 · 수학·국어",done:false,warn:false},
+];
+
+/* ── HELPERS ── */
+const riskSig = r => r==="high"?"s-red":r==="ok"?"s-yellow":"s-green";
+const riskTag = r => r==="high"?'<span class="tag t-danger">위험</span>':r==="ok"?'<span class="tag t-warning">주의</span>':'<span class="tag t-success">정상</span>';
+const barCol  = r => r==="high"?"#E24B4A":r==="ok"?"#EF9F27":"#639922";
+function miniBars(trend,risk){
+  const max=Math.max(...trend)||1;
+  const col=barCol(risk);
+  return `<div class="mini-bars">${trend.map((v,i)=>`<div style="height:${Math.round(v/max*20)}px;background:${i===trend.length-1?col:col+'66'};width:6px;border-radius:1px 1px 0 0;"></div>`).join('')}</div>`;
+}
+
+/* ── PANEL SWITCH ── */
+let selectedMember=null, selectedChurn=null, notifFilter='all';
+function switchPanel(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  el.classList.add('active');
+  const titles={dashboard:'학습 현황 대시보드',growth:'학습 성장 예측 모델',assistant:'AI 진도 어시스턴트',churn:'퇴회 위험 관리',schedule:'오늘 노순표',notify:'업무 알림'};
+  document.getElementById('topbar-title').textContent=titles[id]||id;
+  if(id==='growth') renderGrowth();
+  if(id==='assistant') renderAssistant();
+  if(id==='churn') renderChurn();
+  if(id==='schedule') renderSchedule();
+  if(id==='notify') renderNotif();
+}
+
+/* ── DASHBOARD ── */
+function renderMembers(){
+  const sort=document.getElementById('sort-sel').value;
+  let list=[...members];
+  if(sort==="risk") list.sort((a,b)=>({high:0,ok:1,good:2}[a.risk]-{high:0,ok:1,good:2}[b.risk]));
+  else if(sort==="rate") list.sort((a,b)=>a.rate-b.rate);
+  else list.sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+  document.getElementById('member-tbody').innerHTML=list.map(m=>`
+    <tr class="${selectedMember===m.id?'selected':''}" onclick="selectMember(${m.id})" style="cursor:pointer;">
+      <td><span class="signal ${riskSig(m.risk)}"></span></td>
+      <td><div style="font-weight:600;">${m.name}</div><div style="font-size:11px;color:#888;">${m.grade} · ${m.subject}</div></td>
+      <td style="font-weight:700;color:${barCol(m.risk)}">${m.rate}%</td>
+      <td style="font-weight:500;">${m.submit}/${m.max}</td>
+      <td>${miniBars(m.trend,m.risk)}</td>
+      <td>${riskTag(m.risk)}</td>
+    </tr>`).join('');
+}
+function selectMember(id){
+  selectedMember=id;
+  renderMembers();
+  const m=members.find(x=>x.id===id);
+  const max=Math.max(...m.trend)||1;
+  const weeks=['3주전','2주전','지난주','이번주'];
+  const bars=m.trend.map((v,i)=>`<div class="bar-col"><div class="bar-pct" style="color:${barCol(m.risk)}">${v}%</div><div class="bar-fill" style="height:${Math.round(v/max*52)}px;background:${i===m.trend.length-1?barCol(m.risk):barCol(m.risk)+'55'};"></div><div class="bar-lbl">${weeks[i]}</div></div>`).join('');
+  const aiBlock=m.ai?`<div class="ai-flag"><i class="ti ti-robot"></i><div class="ai-body"><div class="ai-title">퇴회 위험 감지</div>${m.ai}</div></div>`:`<div class="ai-ok"><i class="ti ti-check" style="font-size:16px"></i>이상 신호 없음 · 정상 진행 중</div>`;
+  document.getElementById('detail-panel').innerHTML=`
+    <div style="padding:14px 16px;border-bottom:1px solid #f0f1f3;display:flex;align-items:center;gap:10px;">
+      <div class="avatar avatar-lg">${m.name[0]}</div>
+      <div><div style="font-size:15px;font-weight:700;">${m.name}</div><div style="font-size:12px;color:#888;">${m.grade} · ${m.subject} · 담당: ${m.teacher}</div></div>
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid #f0f1f3;">
+      <div class="section-label">이번 주 지표</div>
+      <div class="stat-row"><span class="stat-key">정답률</span><span class="stat-val" style="color:${barCol(m.risk)}">${m.rate}%</span></div>
+      <div class="stat-row"><span class="stat-key">제출량</span><span class="stat-val">${m.submit}/${m.max}장</span></div>
+      <div class="stat-row"><span class="stat-key">상태</span><span class="stat-val">${riskTag(m.risk)}</span></div>
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid #f0f1f3;">
+      <div class="section-label">4주 정답률 추세</div>
+      <div class="bar-chart">${bars}</div>
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid #f0f1f3;">
+      <div class="section-label">AI 분석</div>
+      ${aiBlock}
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid #f0f1f3;">
+      <div class="section-label">교사 기록</div>
+      <div style="font-size:12px;background:#f8fafc;border-radius:7px;padding:8px 10px;line-height:1.6;">${m.note}</div>
+    </div>
+    <div style="padding:12px 16px;">
+      <div class="section-label">지구장 피드백</div>
+      <textarea id="fb-${id}" rows="3" placeholder="교사에게 전달할 지도 방향...">${m.feedback}</textarea>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+        <button class="btn btn-navy" onclick="sendFeedback(${m.id})"><i class="ti ti-send" style="font-size:12px"></i>교사에게 전달</button>
+      </div>
+      <div class="sent-msg" id="sent-${id}"><i class="ti ti-check"></i>교사 앱으로 전달됐습니다.</div>
+    </div>`;
+}
+function sendFeedback(id){
+  const m=members.find(x=>x.id===id);
+  m.feedback=document.getElementById('fb-'+id).value;
+  const el=document.getElementById('sent-'+id);
+  el.style.display='flex';el.style.alignItems='center';el.style.gap='5px';
+  setTimeout(()=>{el.style.display='none';},3000);
+}
+
+/* ── GROWTH ── */
+function renderGrowth(){
+  const idx=parseInt(document.getElementById('growth-member').value);
+  const g=growthData[idx];
+  document.getElementById('growth-profile').innerHTML=`
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;">
+      <div class="avatar avatar-xl">${g.name[0]}</div>
+      <div>
+        <div style="font-size:14px;font-weight:700;">${g.name} <span style="font-size:12px;color:#888;font-weight:400;">${g.grade}</span></div>
+        <div style="font-size:12px;color:#888;margin-top:2px;">현재 ${g.stage} 진행 중</div>
+        <div style="margin-top:6px;"><span class="badge badge-navy">시작: ${g.startStage}</span> <span style="font-size:12px;color:#888;margin-left:4px;">→ 현재: ${g.stage}</span></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;">
+      <div style="flex:1;text-align:center;background:#f0f4fa;border-radius:7px;padding:8px;">
+        <div style="font-size:10px;color:#888;margin-bottom:2px;">학습 기간</div>
+        <div style="font-size:15px;font-weight:700;color:#1A2A4F;">${g.duration}</div>
+      </div>
+      <div style="flex:1;text-align:center;background:#EAF3DE;border-radius:7px;padding:8px;">
+        <div style="font-size:10px;color:#3B6D11;margin-bottom:2px;">총 성장</div>
+        <div style="font-size:15px;font-weight:700;color:#3B6D11;">${g.growth}</div>
+      </div>
+    </div>`;
+  document.getElementById('growth-total-badge').textContent='총 성장 '+g.growth;
+  document.getElementById('growth-compare').innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:10px;padding:4px 0;">
+      ${[['전국 평균',g.national,'#1A2A4F'],['주요 학군지',g.regional,'#E0992E'],['글로벌 평균',g.global,'#A32D2D']].map(([lab,val,col])=>`
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:12px;color:#666;">${lab}</span>
+            <span style="font-size:12px;font-weight:700;color:${col};">${val}</span>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" style="width:${100-parseInt(val.replace('상위','').replace('%','').trim())}%;background:${col};"></div></div>
+        </div>`).join('')}
+    </div>`;
+  const max=Math.max(...g.curve);
+  const svgW=360,svgH=120,padL=10,padR=10,padT=10,padB=10;
+  const pts=g.curve.map((v,i)=>{
+    const x=padL+(i/(g.curve.length-1))*(svgW-padL-padR);
+    const y=padT+(1-v/max)*(svgH-padT-padB);
+    return `${x},${y}`;
+  }).join(' ');
+  document.getElementById('growth-chart-area').innerHTML=`
+    <svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%;height:120px;">
+      <polyline points="${pts}" fill="none" stroke="#1A2A4F" stroke-width="2.5" stroke-linejoin="round"/>
+      <polyline points="${pts}" fill="none" stroke="#E0992E" stroke-width="1.5" stroke-dasharray="4 3" stroke-linejoin="round" opacity="0.5"/>
+      <circle cx="${padL+(g.curve.length-1)/(g.curve.length-1)*(svgW-padL-padR)}" cy="${padT+(1-g.curve[g.curve.length-1]/max)*(svgH-padT-padB)}" r="5" fill="#E0992E"/>
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:#aaa;margin-top:4px;">
+      <span>시작</span><span style="color:#E0992E;font-weight:700;">현재 ${g.stage}</span><span>예측</span>
+    </div>`;
+  document.getElementById('growth-ai').innerHTML=`
+    <div class="ai-assist">
+      <div class="ai-chip"><i class="ti ti-robot"></i>AI 분석</div>
+      <div style="font-size:13px;line-height:1.65;color:#1A2A4F;margin-bottom:10px;">${g.ai}</div>
+      <div style="border-top:1px solid #c8d8f0;padding-top:10px;">
+        <div style="font-size:11px;color:#5a7ab0;font-weight:700;margin-bottom:5px;">📋 학부모 상담 멘트 (복사해서 활용하세요)</div>
+        <div style="font-size:12px;color:#1A2A4F;background:rgba(255,255,255,0.7);border-radius:7px;padding:10px;line-height:1.65;">"${g.counsel}"</div>
+      </div>
+    </div>`;
+}
+
+/* ── ASSISTANT ── */
+function renderAssistant(){
+  const idx=parseInt(document.getElementById('asst-member').value);
+  const a=asstData[idx];
+  document.getElementById('asst-stat').innerHTML=`
+    <div class="stat-row"><span class="stat-key">현재 단계</span><span class="stat-val">${a.stage}</span></div>
+    <div class="stat-row"><span class="stat-key">이번 주 진도</span><span class="stat-val">${a.speed}장/주</span></div>
+    <div class="stat-row"><span class="stat-key">담당 학년</span><span class="stat-val">${a.grade} · ${a.subject}</span></div>`;
+  document.getElementById('asst-wig').innerHTML=a.wig.map(w=>`
+    <div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid #f8f8f8;">
+      <i class="ti ${w.ok?'ti-circle-check':'ti-clock'}" style="color:${w.ok?'#3B6D11':'#854F0B'};font-size:15px;flex-shrink:0;"></i>
+      <div>
+        <div style="font-size:12px;font-weight:600;">${w.k}</div>
+        <div style="font-size:11px;color:#888;">${w.v}</div>
+      </div>
+    </div>`).join('');
+  const r=a.rec;
+  document.getElementById('asst-recommend').innerHTML=`
+    <div style="background:#EDF2F8;border-radius:8px;padding:12px;">
+      <div style="font-size:11px;color:#5a7ab0;font-weight:700;margin-bottom:4px;">AI 추천 다음 단계</div>
+      <div style="font-size:22px;font-weight:800;color:#1A2A4F;">${r.stage}</div>
+      <div style="font-size:12px;color:#444;margin-top:4px;line-height:1.5;">${r.reason}</div>
+    </div>
+    <div>
+      <div class="section-label">추천 근거</div>
+      ${r.basis.map(b=>`<div style="display:flex;gap:6px;padding:4px 0;font-size:12px;"><i class="ti ti-check" style="color:#3B6D11;font-size:14px;flex-shrink:0;"></i>${b}</div>`).join('')}
+    </div>
+    <div style="border-top:1px solid #f0f1f3;padding-top:10px;">
+      <div class="section-label">AI 생성 학부모 메시지</div>
+      <div style="font-size:12px;background:#f8fafc;border-radius:7px;padding:10px;line-height:1.65;color:#333;">"${r.msg}"</div>
+    </div>
+    <button class="btn btn-amber" style="width:100%;justify-content:center;">
+      <i class="ti ti-check" style="font-size:14px"></i>진도 확정하기
+    </button>`;
+}
+
+/* ── CHURN ── */
+function renderChurn(){
+  const high=members.filter(m=>m.risk==="high");
+  document.getElementById('churn-list').innerHTML=high.map(m=>`
+    <div style="padding:12px 16px;border-bottom:1px solid #f0f1f3;cursor:pointer;${selectedChurn===m.id?'background:#FCEBEB;':''}" onclick="selectChurn(${m.id})">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span class="signal s-red"></span>
+        <span style="font-weight:700;">${m.name}</span>
+        <span style="font-size:11px;color:#888;">${m.grade} · ${m.subject}</span>
+        <span class="tag t-danger" style="margin-left:auto;">위험</span>
+      </div>
+      <div style="margin-left:16px;">
+        <div style="font-size:12px;color:#A32D2D;">${m.ai}</div>
+        <div style="margin-top:6px;font-size:11px;color:#888;">담당: ${m.teacher}</div>
+      </div>
+    </div>`).join('');
+}
+function selectChurn(id){
+  selectedChurn=id;
+  renderChurn();
+  const m=members.find(x=>x.id===id);
+  document.getElementById('churn-detail').innerHTML=`
+    <div style="padding:14px 16px;border-bottom:1px solid #f0f1f3;background:#FCEBEB;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="avatar avatar-lg" style="background:#f7c1c1;color:#A32D2D;">${m.name[0]}</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;">${m.name}</div>
+          <div style="font-size:12px;color:#888;">${m.grade} · ${m.subject} · 담당: ${m.teacher}</div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid #f0f1f3;">
+      <div class="section-label">위험 요인</div>
+      ${m.churnFactors.map(f=>`<div style="display:flex;gap:7px;padding:5px 0;font-size:12px;border-bottom:1px solid #f8f8f8;"><i class="ti ti-point-filled" style="color:#A32D2D;font-size:14px;flex-shrink:0;margin-top:1px;"></i>${f}</div>`).join('')}
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid #f0f1f3;">
+      <div class="section-label">AI 권장 대응</div>
+      <div style="font-size:12px;line-height:1.65;background:#FBF1E6;border-radius:7px;padding:10px;">${m.churnAction}</div>
+    </div>
+    <div style="padding:12px 16px;">
+      <div class="section-label">대응 메모</div>
+      <textarea rows="3" placeholder="대응 내용을 기록하세요..."></textarea>
+      <button class="btn btn-navy" style="margin-top:6px;"><i class="ti ti-device-floppy" style="font-size:12px"></i>저장</button>
+    </div>`;
+}
+
+/* ── SCHEDULE ── */
+function renderSchedule(){
+  document.getElementById('schedule-list').innerHTML=scheduleData.map(s=>`
+    <div class="sched-row">
+      <div class="sched-time">${s.time}</div>
+      <div style="flex:1;">
+        <div class="sched-name${s.done?' ':''}" style="${s.done?'text-decoration:line-through;color:#bbb;':''}">${s.name}</div>
+        <div class="sched-sub">${s.grade}</div>
+      </div>
+      <div class="sched-tags">
+        ${s.done?'<span class="tag t-success">완료</span>':'<span class="tag t-info">예정</span>'}
+        ${s.warn?`<span class="tag t-danger"><i class="ti ti-alert-triangle" style="font-size:10px"></i>주의</span>`:''}
+        ${s.good?`<span class="tag t-success"><i class="ti ti-trending-up" style="font-size:10px"></i>상향</span>`:''}
+      </div>
+    </div>`).join('');
+  document.getElementById('schedule-notif').innerHTML=notifData.filter(n=>n.unread&&n.type==='danger').map(n=>`
+    <div class="notif-item">
+      <div class="notif-icon" style="background:${n.iconBg};"><i class="ti ${n.icon}" style="color:${n.iconColor};"></i></div>
+      <div style="flex:1;"><div class="notif-title">${n.title}</div><div class="notif-desc">${n.desc}</div><div class="notif-time">${n.time}</div></div>
+      <div class="notif-unread"></div>
+    </div>`).join('');
+}
+
+/* ── NOTIFY ── */
+function filterNotif(f,el){
+  notifFilter=f;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderNotif();
+}
+function renderNotif(){
+  const list=notifFilter==='all'?notifData:notifFilter==='danger'?notifData.filter(n=>n.type==='danger'):notifData.filter(n=>n.type==='info');
+  document.getElementById('notif-list').innerHTML=list.map(n=>`
+    <div class="notif-item">
+      <div class="notif-icon" style="background:${n.iconBg};"><i class="ti ${n.icon}" style="color:${n.iconColor};font-size:17px;"></i></div>
+      <div style="flex:1;">
+        <div class="notif-title">${n.title}</div>
+        <div class="notif-desc">${n.desc}</div>
+        <div class="notif-time">${n.time}</div>
+      </div>
+      ${n.unread?'<div class="notif-unread"></div>':''}
+    </div>`).join('');
+}
+
+/* ── INIT ── */
+renderMembers();
+</script>
+</body>
+</html>
